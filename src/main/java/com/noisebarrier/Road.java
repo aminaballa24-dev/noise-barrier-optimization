@@ -58,7 +58,7 @@ public class Road {
         return startX;
     }
 
-    public double getStart() {
+    public double getStartY() {
         return startY;
     }
 
