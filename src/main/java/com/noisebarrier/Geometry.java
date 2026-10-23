@@ -58,3 +58,15 @@ public final class Geometry {
 
         return value > 0 ? 1 : 2;
     }
+
+    private static boolean onSegment(
+            double ax, double ay,
+            double px, double py,
+            double bx, double by) {
+
+        return px >= Math.min(ax, bx) - EPSILON
+                && px <= Math.max(ax, bx) + EPSILON
+                && py >= Math.min(ay, by) - EPSILON
+                && py <= Math.max(ay, by) + EPSILON;
+    }
+}

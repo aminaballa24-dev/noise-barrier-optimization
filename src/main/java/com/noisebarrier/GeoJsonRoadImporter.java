@@ -17,7 +17,7 @@ public class GeoJsonRoadImporter {
     private final ObjectMapper mapper = new ObjectMapper();
 
 
-    public List<Road> loadRoads(Path file) throwa IOExceptopm {
+    public List<Road> loadRoads(Path file) throws IOException {
         JsonNode root = mapper.readTree(file.toFile());
         JsonNode features = root.path("features");
 
