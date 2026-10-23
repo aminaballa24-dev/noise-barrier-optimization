@@ -68,5 +68,36 @@ public class GeoJsonRoadImporter {
 
                 double length = Math.hypot(x2 - x1, y2 - y1);
 
+                if (length < 0.5) {
+                    continue;
+                }
+
+                // Approximate the energy contribution of a segment
+                // relative to a 10-metre reference segment.
+                double segmentNoiseDb = referenceNoiseDb
+                        + 10.0 * Math.log10(
+                        length / REFERENCE_DISTANCE);
+
+                roads.add(new Road(
+                        roadId + "-segment-" + i,
+                        x1, y1, x2, y2,
+                        segmentNoiseDb,
+                        REFERENCE_DISTANCE));
+            }
+        }
+
+        if (roads.isEmpty()) {
+            throw new IOException(
+                    "No usable road segments were found in the file.");
+        }
+
+        return roads;
+    }
+
+    private double toX(double longitude) {
+        return (longitude - CENTER_LON)
+                * 111320.0 * Math.cos(Math.toRadians(CENTER_LAT));
+    }
+
         }
 }
