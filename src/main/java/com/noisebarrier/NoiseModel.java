@@ -19,7 +19,7 @@ public class NoiseModel {
             throw new IllegalArgumentException("Barrier reduction must be non-negative and finite.");
         }
 
-        double[] closestPoint = closestPointOnRoad(road, area);
+        double[] closestPoint = closestPointOnRoad(road, area.getX(), area.getY());
 
         double dx = area.getX() - closestPoint[0];
         double dy = area.getY() - closestPoint[1];
@@ -71,6 +71,21 @@ public class NoiseModel {
         return combineNoiseLevels(contributions);
     }
 
+    public double estimateCombinedNoiseAtPointDb(
+            List<Road> roads,
+            double x,
+            double y,
+            TrafficScenario scenario,
+            List<BarrierSegment> barriers,
+            double barrierReductionDb) {
+
+        ResidentialArea point = new ResidentialArea(
+                "grid-point", x, y, 0);
+
+        return estimateCombinedNoiseDb(
+                roads, point, scenario, barriers, barrierReductionDb);
+    }
+
     public static double combineNoiseLevels(List<Double> noiseLevelsDb) {
 
         if (noiseLevelsDb == null || noiseLevelsDb.isEmpty()) {
@@ -90,7 +105,7 @@ public class NoiseModel {
         return 10.0 * Math.log10(energySum);
     }
 
-    private double [] closestPointOnRoad(Road road, ResidentialArea area) {
+    private double[] closestPointOnRoad(Road road, double x, double y) {
         double startX = road.getStartX();
         double startY = road.getStartY();
 
@@ -99,12 +114,13 @@ public class NoiseModel {
 
         double lengthSquared = dx * dx + dy * dy;
 
-        double t = ((area.getX() - startX) * dx + (area.getY() - startY) * dy) / lengthSquared;
+        double t = ((x - startX) * dx + (y - startY) * dy) / lengthSquared;
 
         t = Math.max(0.0, Math.min(1.0, t));
 
         return new double[] {
-                startX + t * dx, startY + t * dy
+                startX + t * dx,
+                startY + t * dy
         };
     }
 }
