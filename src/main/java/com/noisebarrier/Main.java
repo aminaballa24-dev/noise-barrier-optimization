@@ -1,4 +1,3 @@
-
 package com.noisebarrier;
 
 import java.nio.file.Path;

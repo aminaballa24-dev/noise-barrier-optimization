@@ -71,4 +71,4 @@ public class BarrierSegment {
         return Math.hypot(endX - startX, endY - startY);
     }
 }
-}
+

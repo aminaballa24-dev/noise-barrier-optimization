@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.ArrayList;
 
 public class GeoJsonRoadImporter {
 
@@ -66,38 +67,76 @@ public class GeoJsonRoadImporter {
                 double x2 = toX(lon2);
                 double y2 = toY(lat2);
 
+
                 double length = Math.hypot(x2 - x1, y2 - y1);
 
                 if (length < 0.5) {
                     continue;
                 }
 
-                // Approximate the energy contribution of a segment
-                // relative to a 10-metre reference segment.
-                double segmentNoiseDb = referenceNoiseDb
-                        + 10.0 * Math.log10(
+                int pieces = (int) Math.ceil(
                         length / REFERENCE_DISTANCE);
 
-                roads.add(new Road(
-                        roadId + "-segment-" + i,
-                        x1, y1, x2, y2,
-                        segmentNoiseDb,
-                        REFERENCE_DISTANCE));
+                double pieceLength = length / pieces;
+
+                double pieceNoiseDb = referenceNoiseDb
+                        + 10.0 * Math.log10(
+                        pieceLength / REFERENCE_DISTANCE);
+
+                for (int j = 0; j < pieces; j++) {
+                    double t0 = j / (double) pieces;
+                    double t1 = (j + 1) / (double) pieces;
+
+                    double pieceStartX = x1 + t0 * (x2 - x1);
+                    double pieceStartY = y1 + t0 * (y2 - y1);
+                    double pieceEndX = x1 + t1 * (x2 - x1);
+                    double pieceEndY = y1 + t1 * (y2 - y1);
+
+                    roads.add(new Road(
+                            roadId + "-segment-" + i + "-part-" + j,
+                            pieceStartX,
+                            pieceStartY,
+                            pieceEndX,
+                            pieceEndY,
+                            pieceNoiseDb,
+                            REFERENCE_DISTANCE));
+                }
             }
         }
 
-        if (roads.isEmpty()) {
-            throw new IOException(
-                    "No usable road segments were found in the file.");
+            if (roads.isEmpty()) {
+                throw new IOException(
+                        "No usable road segments were found in the file.");
+            }
+            return roads;
         }
-
-        return roads;
-    }
 
     private double toX(double longitude) {
         return (longitude - CENTER_LON)
                 * 111320.0 * Math.cos(Math.toRadians(CENTER_LAT));
     }
 
+        private double toY(double latitude) {
+            return (latitude - CENTER_LAT) * 110540.0;
         }
-}
+
+        private double referenceNoiseForHighway(String highway) {
+            // Illustrative assumptions, NOT measured noise data.
+            switch (highway) {
+                case "primary":
+                    return 70.0;
+                case "secondary":
+                    return 67.0;
+                case "tertiary":
+                    return 64.0;
+                case "unclassified":
+                    return 62.0;
+                case "residential":
+                    return 60.0;
+                case "living_street":
+                    return 55.0;
+                default:
+                    return 60.0;
+            }
+        }
+    }
