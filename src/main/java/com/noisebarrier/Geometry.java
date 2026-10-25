@@ -43,6 +43,22 @@ public final class Geometry {
         return false;
     }
 
+    public static double polygonArea(double[] x, double[] y) {
+        if (x == null || y == null || x.length != y.length || x.length < 3) {
+            throw new IllegalArgumentException("A polygon needs at least 3 matching points.");
+        }
+
+        double sum = 0.0;
+
+        for (int i = 0; i < x.length; i++) {
+            int next = (i + 1) % x.length;
+
+            sum += x[i] * y[next] - x[next] * y[i];
+        }
+
+        return Math.abs(sum) / 2.0;
+    }
+
     private static int orientation(
             double ax, double ay,
             double bx, double by,
