@@ -59,6 +59,37 @@ public final class Geometry {
         return Math.abs(sum) / 2.0;
     }
 
+    public static double[] polygonCentroid(double[] x, double[] y) {
+        if (x == null || y == null || x.length != y.length || x.length < 3) {
+            throw new IllegalArgumentException("A polygon needs at least 3 matching points.");
+        }
+
+        double crossSum = 0.0;
+        double centroidX = 0.0;
+        double centroidY = 0.0;
+
+        for (int i = 0; i < x.length; i++) {
+            int next = (i + 1) % x.length;
+
+            double cross = x[i] * y[next] - x[next] * y[i];
+
+            crossSum += cross;
+            centroidX += (x[i] + x[next]) * cross;
+            centroidY += (y[i] + y[next]) * cross;
+        }
+
+        double signedArea = crossSum / 2.0;
+
+        if (Math.abs(signedArea) < EPSILON) {
+            throw new IllegalArgumentException("Polygon area cannot be zero.");
+        }
+
+        centroidX /= 6.0 * signedArea;
+        centroidY /= 6.0 * signedArea;
+
+        return new double[]{centroidX, centroidY};
+    }
+
     private static int orientation(
             double ax, double ay,
             double bx, double by,
