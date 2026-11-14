@@ -80,7 +80,7 @@ public class NoiseModel {
             double barrierReductionDb) {
 
         ResidentialArea point = new ResidentialArea(
-                "grid-point", x, y, 0);
+                "grid-point", x, y, 1.0);
 
         return estimateCombinedNoiseDb(
                 roads, point, scenario, barriers, barrierReductionDb);
