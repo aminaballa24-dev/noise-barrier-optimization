@@ -18,3 +18,22 @@ public class BarrierEvaluator {
             throw new IllegalArgumentException("Invalid evaluation inputs.");
         }
 
+        double totalBenefit = 0.0;
+
+        for (ResidentialArea area : areas) {
+
+            double before = noiseModel.estimateCombinedNoiseDb(
+                    roads, area, scenario, List.of(), barrierReductionDb);
+
+            double after = noiseModel.estimateCombinedNoiseDb(
+                    roads, area, scenario, barriers, barrierReductionDb);
+
+            double reduction = before - after;
+
+            totalBenefit += area.getWeight() * reduction;
+        }
+
+        return totalBenefit;
+    }
+}
+
