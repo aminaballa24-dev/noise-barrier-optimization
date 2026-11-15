@@ -30,3 +30,42 @@ public class CandidateBarrierGenerator {
 
             boolean left = false;
             boolean right = false;
+
+            for (ResidentialArea area : areas) {
+                double px = area.getX() - road.getStartX();
+                double py = area.getY() - road.getStartY();
+
+                double t = (px * dx + py * dy) / (length * length);
+                t = Math.max(0, Math.min(1, t));
+
+                double closestX = road.getStartX() + t * dx;
+                double closestY = road.getStartY() + t * dy;
+
+                double distance = Math.hypot(
+                        area.getX() - closestX,
+                        area.getY() - closestY
+                );
+
+                if (distance > maxDistance) {
+                    continue;
+                }
+
+                double cross = dx * py - dy * px;
+
+                if (cross > 0) left = true;
+                if (cross < 0) right = true;
+
+                if (left && right) break;
+            }
+
+            if (left) {
+                candidates.add(createBarrier(road, nx, ny, offset, "left"));
+            }
+
+            if (right) {
+                candidates.add(createBarrier(road, -nx, -ny, offset, "right"));
+            }
+        }
+
+        return candidates;
+    }
