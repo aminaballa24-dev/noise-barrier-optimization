@@ -1,8 +1,8 @@
 
 package com.noisebarrier;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class ExhaustiveSearch {
 
@@ -16,47 +16,55 @@ public class ExhaustiveSearch {
             double maxLength,
             double barrierReductionDb) {
 
+        if (roads == null || roads.isEmpty()
+                || areas == null || areas.isEmpty()
+                || scenario == null || candidates == null
+                || !Double.isFinite(maxLength) || maxLength < 0
+                || !Double.isFinite(barrierReductionDb) || barrierReductionDb < 0) {
+            throw new IllegalArgumentException("Invalid search inputs.");
+        }
+
+        // Exhaustive search is only used for small candidate sets.
+        if (candidates.size() > 15) {
+            throw new IllegalArgumentException("Too many candidates.");
+        }
+
+        if (candidates.stream().anyMatch(b -> b == null)) {
+            throw new IllegalArgumentException("Candidates cannot contain null.");
+        }
+
         List<BarrierSegment> best = new ArrayList<>();
         double bestBenefit = 0;
 
-        for (BarrierSegment barrier : candidates) {
-            if (barrier.getLength() > maxLength) {
+        int totalCombinations = 1 << candidates.size();
+
+        for (int mask = 1; mask < totalCombinations; mask++) {
+            List<BarrierSegment> selected = new ArrayList<>();
+            double totalLength = 0;
+
+            // Build the current combination.
+            for (int i = 0; i < candidates.size(); i++) {
+                if ((mask & (1 << i)) != 0) {
+                    BarrierSegment barrier = candidates.get(i);
+                    selected.add(barrier);
+                    totalLength += barrier.getLength();
+                }
+            }
+
+            // Skip combinations that exceed the budget.
+            if (totalLength > maxLength + 1e-9) {
                 continue;
             }
 
             double benefit = evaluator.calculateBenefit(
                     roads, areas, scenario,
-                    List.of(barrier), barrierReductionDb);
+                    selected, barrierReductionDb);
 
             if (benefit > bestBenefit) {
                 bestBenefit = benefit;
-                best = List.of(barrier);
+                best = new ArrayList<>(selected);
             }
         }
-
-
-        for (int i = 0; i < candidates.size(); i++) {
-            for (int j = i + 1; j < candidates.size(); j++) {
-
-                BarrierSegment b1 = candidates.get(i);
-                BarrierSegment b2 = candidates.get(j);
-
-                if (b1.getLength() + b2.getLength() > maxLength) {
-                    continue;
-                }
-
-                List<BarrierSegment> pair = List.of(b1, b2);
-
-                double benefit = evaluator.calculateBenefit(
-                        roads, areas, scenario, pair, barrierReductionDb);
-
-                if (benefit > bestBenefit) {
-                    bestBenefit = benefit;
-                    best = pair;
-                }
-            }
-        }
-
 
         return best;
     }
