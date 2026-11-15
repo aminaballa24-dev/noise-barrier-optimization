@@ -69,3 +69,18 @@ public class CandidateBarrierGenerator {
 
         return candidates;
     }
+
+    private BarrierSegment createBarrier(
+            Road road, double nx, double ny,
+            double offset, String side) {
+
+        return new BarrierSegment(
+                road.getId() + "-" + side,
+                road.getStartX() + nx * offset,
+                road.getStartY() + ny * offset,
+                road.getEndX() + nx * offset,
+                road.getEndY() + ny * offset,
+                road.getLength()
+        );
+    }
+}
