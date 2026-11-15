@@ -1,3 +1,4 @@
+
 package com.noisebarrier;
 
 import java.util.List;
@@ -14,6 +15,7 @@ public class BarrierEvaluator {
             double barrierReductionDb) {
 
         if (roads == null || roads.isEmpty()
+                || areas == null || areas.isEmpty()
                 || scenario == null || barriers == null) {
             throw new IllegalArgumentException("Invalid evaluation inputs.");
         }
@@ -36,4 +38,3 @@ public class BarrierEvaluator {
         return totalBenefit;
     }
 }
-

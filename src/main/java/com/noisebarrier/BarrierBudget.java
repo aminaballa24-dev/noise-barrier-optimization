@@ -15,4 +15,12 @@ public class BarrierBudget {
 
         double totalLength = 0;
 
+        for (BarrierSegment barrier : barriers) {
+            totalLength += barrier.getLength();
+        }
+
+        return totalLength <= maxLength + 1e-9;
+    }
+}
+
 
