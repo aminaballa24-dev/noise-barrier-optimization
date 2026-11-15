@@ -34,6 +34,30 @@ public class ExhaustiveSearch {
             }
         }
 
+
+        for (int i = 0; i < candidates.size(); i++) {
+            for (int j = i + 1; j < candidates.size(); j++) {
+
+                BarrierSegment b1 = candidates.get(i);
+                BarrierSegment b2 = candidates.get(j);
+
+                if (b1.getLength() + b2.getLength() > maxLength) {
+                    continue;
+                }
+
+                List<BarrierSegment> pair = List.of(b1, b2);
+
+                double benefit = evaluator.calculateBenefit(
+                        roads, areas, scenario, pair, barrierReductionDb);
+
+                if (benefit > bestBenefit) {
+                    bestBenefit = benefit;
+                    best = pair;
+                }
+            }
+        }
+
+
         return best;
     }
 }
