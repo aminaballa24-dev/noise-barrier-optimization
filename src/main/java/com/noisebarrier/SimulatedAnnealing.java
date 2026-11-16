@@ -40,3 +40,28 @@ public class SimulatedAnnealing {
         double currentBenefit = 0;
         double bestBenefit = 0;
         double temperature = 2.0;
+
+        Random random = new Random(42);
+
+        for (int step = 0; step < 300; step++) {
+            List<BarrierSegment> trial = new ArrayList<>(current);
+
+            BarrierSegment barrier =
+                    candidates.get(random.nextInt(candidates.size()));
+
+            if (trial.contains(barrier)) {
+                trial.remove(barrier);
+            } else {
+                trial.add(barrier);
+
+                if (!BarrierBudget.isWithinBudget(trial, maxLength)
+                        && !current.isEmpty()) {
+                    trial.remove(current.get(
+                            random.nextInt(current.size())));
+                }
+            }
+
+            if (!BarrierBudget.isWithinBudget(trial, maxLength)) {
+                temperature *= 0.99;
+                continue;
+            }
