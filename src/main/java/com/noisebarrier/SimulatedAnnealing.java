@@ -24,3 +24,19 @@ public class SimulatedAnnealing {
                 || candidates.contains(null)) {
             throw new IllegalArgumentException("Invalid inputs.");
         }
+
+        List<BarrierSegment> current = new ArrayList<>();
+        List<BarrierSegment> best = new ArrayList<>();
+
+        if (candidates.isEmpty() || maxLength == 0) {
+            return best;
+        }
+
+        double totalWeight = 0;
+        for (ResidentialArea area : areas) {
+            totalWeight += area.getWeight();
+        }
+
+        double currentBenefit = 0;
+        double bestBenefit = 0;
+        double temperature = 2.0;
