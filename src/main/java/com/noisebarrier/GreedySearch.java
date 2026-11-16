@@ -30,3 +30,23 @@ public class GreedySearch {
         List<BarrierSegment> selected = new ArrayList<>();
         double usedLength = 0;
         double currentBenefit = 0;
+
+        while (true) {
+            BarrierSegment bestBarrier = null;
+            double bestRatio = 0;
+            double bestBenefit = currentBenefit;
+
+            for (BarrierSegment barrier : candidates) {
+                if (selected.contains(barrier)
+                        || usedLength + barrier.getLength() > maxLength + 1e-9) {
+                    continue;
+                }
+
+                List<BarrierSegment> trial = new ArrayList<>(selected);
+                trial.add(barrier);
+
+                double benefit = evaluator.calculateBenefit(
+                        roads, areas, scenario, trial, barrierReductionDb);
+
+                double ratio = (benefit - currentBenefit)
+                        / barrier.getLength();
