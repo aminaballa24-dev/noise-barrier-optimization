@@ -65,3 +65,16 @@ public class SimulatedAnnealing {
                 temperature *= 0.99;
                 continue;
             }
+
+            double benefit = evaluator.calculateBenefit(
+                    roads, areas, scenario, trial, barrierReductionDb);
+
+            double difference = (benefit - currentBenefit) / totalWeight;
+
+            // Sometimes accept a worse solution to explore other options.
+            if (difference >= 0
+                    || random.nextDouble() < Math.exp(difference / temperature)) {
+                current = trial;
+                currentBenefit = benefit;
+            }
+
