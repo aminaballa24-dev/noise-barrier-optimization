@@ -58,3 +58,30 @@ public class Main {
                 roads, areas, scenario, reductionDb);
     }
 
+    private static void printResult(
+            String name,
+            List<BarrierSegment> barriers,
+            List<Road> roads,
+            List<ResidentialArea> areas,
+            TrafficScenario scenario,
+            double reductionDb) {
+
+        BarrierEvaluator evaluator = new BarrierEvaluator();
+
+        double benefit = evaluator.calculateBenefit(
+                roads, areas, scenario, barriers, reductionDb);
+
+        double totalLength = 0;
+
+        for (BarrierSegment barrier : barriers) {
+            totalLength += barrier.getLength();
+        }
+
+        System.out.println(name);
+        System.out.println("Selected barriers: " + barriers.size());
+        System.out.println("Total length: " + totalLength + " m");
+        System.out.println("Benefit score: " + benefit);
+        System.out.println();
+    }
+}
+
