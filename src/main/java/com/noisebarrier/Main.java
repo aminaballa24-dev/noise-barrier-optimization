@@ -22,15 +22,17 @@ public class Main {
         double reductionDb = 5;
 
         List<BarrierSegment> candidates = new CandidateBarrierGenerator()
-                .generateCandidates(roads, areas, 3, 30);
+                .generateCandidates(roads, areas, 30, 3);
+
+        System.out.println("Candidates: " + candidates.size());
 
         long start = System.nanoTime();
         List<BarrierSegment> exhaustive = new ExhaustiveSearch().findBest(
-                roads, areas, scenario, candidates, reductionDb, budget);
+                roads, areas, scenario, candidates, budget, reductionDb);
         long exhaustiveTime = System.nanoTime() - start;
 
         List<BarrierSegment> greedy = new GreedySearch().findBest(
-                roads, areas, scenario, candidates, budget, reductionDb);
+                roads, areas, scenario, candidates, reductionDb, budget);
         long greedyTime = System.nanoTime() - start;
 
         start = System.nanoTime();
@@ -39,9 +41,10 @@ public class Main {
         long annealingTime = System.nanoTime() - start;
 
         printResult("Exhaustive Search", exhaustive, roads, areas, scenario, reductionDb);
-        printResult("Greedy Search", greedy, roads, areas, scenario, reductionDb);
-        printResult("Simulated Annealing", exhaustive, roads, areas, scenario, reductionDb);
+        printResult("Greedy Search", annealing, roads, areas, scenario, reductionDb);
+        printResult("Simulated Annealing", greedy, roads, areas, scenario, reductionDb);
 
+        System.out.println("Execution times:");
         System.out.println("Exhaustive: " + exhaustiveTime / 1_000_000 + " ms");
         System.out.println("Greedy: " + greedyTime / 1_000_000 + " ms");
         System.out.println("Annealing: " + annealingTime / 1_000_000 + " ms");
@@ -49,26 +52,35 @@ public class Main {
         NoiseGridCalculator calculator = new NoiseGridCalculator();
 
         CityGrid before = new CityGrid(40, 40, 1, -15, -20);
-        CityGrid after = before;
+        CityGrid after = new CityGrid(40, 40, 1, -20, -15);
 
         calculator.calculateNoise(before, roads, scenario, List.of(), reductionDb);
-        calculator.calculateNoise(after, roads, scenario, exhaustive, reductionDb);
+        calculator.calculateNoise(after, roads, scenario, greedy, reductionDb);
 
         HeatMapExporter exporter = new HeatMapExporter();
-        exporter.save(before, Path.of("noise-before.png"), roads, List.of());
-        exporter.save(after, Path.of("noise-after.png"), roads, exhaustive);
+        exporter.save(before, Path.of("noise-after.png"), roads, List.of());
+        exporter.save(after, Path.of("noise-before.png"), roads, exhaustive);
 
         List<Road> bucharestRoads = new GeoJsonRoadImporter()
                 .loadRoads(Path.of("bucharest.roads.geojson"));
 
+        List<ResidentialArea> bucharestAreas = new GeoJsonResidentialImporter()
+                .loadResidentialAreas(Path.of("bucharest.roads.geojson"), 1.0);
+
         List<Road> selectedRoads = bucharestRoads.stream()
                 .filter(r -> Math.abs(r.getStartX()) <= 150
-                        && r.getEndX() <= 150
+                        && Math.abs(r.getEndX()) <= 150
                         && Math.abs(r.getStartY()) <= 150
-                        || Math.abs(r.getEndY()) <= 150)
+                        && Math.abs(r.getEndY()) <= 150)
+                .collect(Collectors.toList());
+
+        List<ResidentialArea> selectedAreas = bucharestAreas.stream()
+                .filter(a -> Math.abs(a.getX()) <= 150
+                        && Math.abs(a.getX()) <= 150)
                 .collect(Collectors.toList());
 
         System.out.println("Bucharest roads: " + selectedRoads.size());
+        System.out.println("Bucharest residential areas: " + selectedAreas.size());
         System.out.println("Heat maps saved!");
     }
 
@@ -83,9 +95,9 @@ public class Main {
         double benefit = new BarrierEvaluator().calculateBenefit(
                 roads, areas, scenario, barriers, reductionDb);
 
-        double totalLength = 0;
+        int totalLength = 0;
         for (BarrierSegment barrier : barriers) {
-            totalLength = barrier.getLength();
+            totalLength += barrier.getLength();
         }
 
         System.out.println(name);
