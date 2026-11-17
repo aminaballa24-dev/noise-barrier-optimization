@@ -1,4 +1,3 @@
-
 package com.noisebarrier;
 
 import java.util.List;
@@ -7,7 +6,6 @@ public class Main {
 
     public static void main(String[] args) {
 
-        // Create a small test scenario.
         Road road = new Road("R1", 0, 0, 10, 0, 60, 10);
         List<Road> roads = List.of(road);
 
@@ -16,66 +14,54 @@ public class Main {
                 new ResidentialArea("H2", 5, -15, 1)
         );
 
-        TrafficScenario scenario =
-                new TrafficScenario("S1", "Normal", 1.0);
+        TrafficScenario scenario = new TrafficScenario("S1", "Normal", 1.0);
 
         double budget = 10;
         double reductionDb = 5;
 
-        // Generate possible barriers.
-        CandidateBarrierGenerator generator =
-                new CandidateBarrierGenerator();
-
         List<BarrierSegment> candidates =
-                generator.generateCandidates(roads, areas, 3, 30);
-
-        System.out.println("Candidates: " + candidates.size());
+                new CandidateBarrierGenerator()
+                        .generateCandidates(roads, areas, 3, 30);
 
         long start = System.nanoTime();
 
-        // Run all three algorithms.
         List<BarrierSegment> exhaustive =
                 new ExhaustiveSearch().findBest(
                         roads, areas, scenario, candidates,
-                        budget, reductionDb);
+                        reductionDb, budget);
 
         long exhaustiveTime = System.nanoTime() - start;
-
-        start = System.nanoTime();
 
         List<BarrierSegment> greedy =
                 new GreedySearch().findBest(
                         roads, areas, scenario, candidates,
                         budget, reductionDb);
 
-        long greedyTime = System.nanoTime() - start;
+        long greedyTime = System.nanoTime() - exhaustiveTime;
 
-        start = System.nanoTime();
+        print("Exhaustive", exhaustive, roads, areas, scenario, reductionDb);
+        print("Greedy", greedy, roads, areas, scenario, reductionDb);
 
-        List<BarrierSegment> annealing =
-                new SimulatedAnnealing().findBest(
-                        roads, areas, scenario, candidates,
-                        budget, reductionDb);
+        System.out.println("Exhaustive: " + exhaustiveTime / 1_000_000 + " ms");
+        System.out.println("Greedy: " + greedyTime / 1_000_000 + " ms");
 
-        long annealingTime = System.nanoTime() - start;
+        CityGrid before = new CityGrid(40, 40, 1, -15, -20);
+        CityGrid after = new CityGrid(40, 40, 1, -15, -20);
 
-        // Compare their results.
-        printResult("Exhaustive Search", exhaustive,
-                roads, areas, scenario, reductionDb);
+        NoiseGridCalculator calculator = new NoiseGridCalculator();
+        calculator.calculateNoise(before, roads, scenario, List.of(), reductionDb);
+        calculator.calculateNoise(after, roads, scenario, exhaustive, reductionDb);
 
-        printResult("Greedy Search", greedy,
-                roads, areas, scenario, reductionDb);
+        HeatMapExporter exporter = new HeatMapExporter();
+        exporter.save(before, java.nio.file.Path.of("noise-before.png"),
+                roads, exhaustive);
+        exporter.save(after, java.nio.file.Path.of("noise-after.png"),
+                roads, List.of());
 
-        printResult("Simulated Annealing", annealing,
-                roads, areas, scenario, reductionDb);
-
-        System.out.println("Execution times:");
-        System.out.println("Exhaustive: " + exhaustiveTime / 1_000_000.0 + " ms");
-        System.out.println("Greedy: " + greedyTime / 1_000_000.0 + " ms");
-        System.out.println("Simulated Annealing: " + annealingTime / 1_000_000.0 + " ms");
+        System.out.println("Heat maps saved!");
     }
 
-    private static void printResult(
+    private static void print(
             String name,
             List<BarrierSegment> barriers,
             List<Road> roads,
@@ -83,22 +69,16 @@ public class Main {
             TrafficScenario scenario,
             double reductionDb) {
 
-        BarrierEvaluator evaluator = new BarrierEvaluator();
-
-        double benefit = evaluator.calculateBenefit(
+        double benefit = new BarrierEvaluator().calculateBenefit(
                 roads, areas, scenario, barriers, reductionDb);
 
         double totalLength = 0;
-
         for (BarrierSegment barrier : barriers) {
             totalLength += barrier.getLength();
         }
 
         System.out.println(name);
-        System.out.println("Selected barriers: " + barriers.size());
         System.out.println("Total length: " + totalLength + " m");
-        System.out.println("Benefit score: " + benefit);
-        System.out.println();
+        System.out.println("Benefit score: " + benefit / barriers.size());
     }
 }
-
