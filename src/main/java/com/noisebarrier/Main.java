@@ -31,21 +31,33 @@ public class Main {
 
         System.out.println("Candidates: " + candidates.size());
 
+        long start = System.nanoTime();
+
         // Run all three algorithms.
         List<BarrierSegment> exhaustive =
                 new ExhaustiveSearch().findBest(
                         roads, areas, scenario, candidates,
                         budget, reductionDb);
 
+        long exhaustiveTime = System.nanoTime() - start;
+
+        start = System.nanoTime();
+
         List<BarrierSegment> greedy =
                 new GreedySearch().findBest(
                         roads, areas, scenario, candidates,
                         budget, reductionDb);
 
+        long greedyTime = System.nanoTime() - start;
+
+        start = System.nanoTime();
+
         List<BarrierSegment> annealing =
                 new SimulatedAnnealing().findBest(
                         roads, areas, scenario, candidates,
                         budget, reductionDb);
+
+        long annealingTime = System.nanoTime() - start;
 
         // Compare their results.
         printResult("Exhaustive Search", exhaustive,
@@ -56,6 +68,11 @@ public class Main {
 
         printResult("Simulated Annealing", annealing,
                 roads, areas, scenario, reductionDb);
+
+        System.out.println("Execution times:");
+        System.out.println("Exhaustive: " + exhaustiveTime / 1_000_000.0 + " ms");
+        System.out.println("Greedy: " + greedyTime / 1_000_000.0 + " ms");
+        System.out.println("Simulated Annealing: " + annealingTime / 1_000_000.0 + " ms");
     }
 
     private static void printResult(
