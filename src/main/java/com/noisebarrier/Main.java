@@ -1,8 +1,8 @@
 package com.noisebarrier;
 
+import java.util.List;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.stream.Collectors;
 
 public class Main {
@@ -10,12 +10,12 @@ public class Main {
     public static void main(String[] args) throws IOException {
 
         // Create a small test scenario.
-        Road road = new Road("R1", 0, 0, 0, 10, 60, 10);
+        Road road = new Road("R1", 0, 0, 10, 0, 60, 10);
         List<Road> roads = List.of(road);
 
         List<ResidentialArea> areas = List.of(
                 new ResidentialArea("H1", 5, 15, 3),
-                new ResidentialArea("H2", 5, 15, 1)
+                new ResidentialArea("H2", 5, -15, 1)
         );
 
         TrafficScenario scenario =
@@ -52,6 +52,8 @@ public class Main {
 
         long greedyTime = System.nanoTime() - start;
 
+        start = System.nanoTime();
+
         List<BarrierSegment> annealing =
                 new SimulatedAnnealing().findBest(
                         roads, areas, scenario, candidates,
@@ -70,11 +72,12 @@ public class Main {
                 roads, areas, scenario, reductionDb);
 
         System.out.println("Execution times:");
-        System.out.println("Exhaustive: " + exhaustiveTime / 1_000.0 + " ms");
-        System.out.println("Greedy: " + greedyTime / 1_000.0 + " ms");
-        System.out.println("Simulated Annealing: " + annealingTime / 1_000.0 + " ms");
+        System.out.println("Exhaustive: " + exhaustiveTime / 1_000_000.0 + " ms");
+        System.out.println("Greedy: " + greedyTime / 1_000_000.0 + " ms");
+        System.out.println("Simulated Annealing: " + annealingTime / 1_000_000.0 + " ms");
 
-        // Calculate noise before and after adding barriers.
+
+// Calculate noise before and after adding barriers.
         NoiseGridCalculator calculator = new NoiseGridCalculator();
 
         CityGrid before = new CityGrid(40, 40, 1, -15, -20);
@@ -84,16 +87,18 @@ public class Main {
                 before, roads, scenario, List.of(), reductionDb);
 
         calculator.calculateNoise(
-                after, roads, scenario, exhaustive, budget);
+                after, roads, scenario, exhaustive, reductionDb);
 
-        // Save both heat maps.
+// Save both heat maps.
         HeatMapExporter exporter = new HeatMapExporter();
+
 
         exporter.save(before, Path.of("noise-before.png"),
                 roads, List.of());
 
         exporter.save(after, Path.of("noise-after.png"),
-                roads, annealing);
+                roads, exhaustive);
+
 
         GeoJsonRoadImporter roadImporter = new GeoJsonRoadImporter();
         GeoJsonResidentialImporter residentialImporter =
@@ -104,25 +109,26 @@ public class Main {
 
         List<ResidentialArea> bucharestAreas =
                 residentialImporter.loadResidentialAreas(
-                        Path.of("bucharest.residential.geojson"), 10.0);
+                        Path.of("bucharest.residential.geojson"), 1.0);
 
-        // Use a small area around our coordinate-system center.
+// Use a small area around our coordinate-system center.
         List<Road> selectedRoads = bucharestRoads.stream()
                 .filter(r -> Math.abs(r.getStartX()) <= 150
                         && Math.abs(r.getEndX()) <= 150
                         && Math.abs(r.getStartY()) <= 150
-                        && Math.abs(r.getEndY()) <= 15)
+                        && Math.abs(r.getEndY()) <= 150)
                 .collect(Collectors.toList());
 
         List<ResidentialArea> selectedAreas = bucharestAreas.stream()
                 .filter(a -> Math.abs(a.getX()) <= 150
-                        || Math.abs(a.getY()) <= 150)
+                        && Math.abs(a.getY()) <= 150)
                 .collect(Collectors.toList());
 
-        System.out.println("Bucharest roads: " + selectedAreas.size());
-        System.out.println("Bucharest residential areas: " + selectedRoads.size());
+        System.out.println("Bucharest roads: " + selectedRoads.size());
+        System.out.println("Bucharest residential areas: " + selectedAreas.size());
 
         System.out.println("Heat maps saved!");
+
     }
 
     private static void printResult(
@@ -145,7 +151,7 @@ public class Main {
         }
 
         System.out.println(name);
-        System.out.println("Selected barriers: " + (barriers.size() - 1));
+        System.out.println("Selected barriers: " + barriers.size());
         System.out.println("Total length: " + totalLength + " m");
         System.out.println("Benefit score: " + benefit);
         System.out.println();
