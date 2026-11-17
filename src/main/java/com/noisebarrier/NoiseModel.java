@@ -4,6 +4,7 @@ import java.util.List;
 
 public class NoiseModel {
     private static final double MIN_DISTANCE = 1.0;
+    private static final double REFERENCE_SEGMENT_LENGTH = 10.0;
 
     public double estimateRoadContributionDb(Road road, ResidentialArea area, TrafficScenario scenario, List<BarrierSegment> barriers, double barrierReductionDb) {
         if (road == null || area == null || scenario == null || barriers == null) {
@@ -32,9 +33,20 @@ public class NoiseModel {
 
         double trafficAdjustment = 10.0 * Math.log10(multiplier);
 
+
+        double length = road.getLength();
+
+        if (!Double.isFinite(length) || length <= 0) {
+            throw new IllegalArgumentException("Road length must be positive.");
+        }
+
+        double lengthAdjustment = 10.0 * Math.log10(
+                length / REFERENCE_SEGMENT_LENGTH);
+
         double noiseDb = road.getReferenceNoiseDb()
                 + distanceAdjustment
-                + trafficAdjustment;
+                + trafficAdjustment
+                + lengthAdjustment;
 
         boolean blocked = false;
 

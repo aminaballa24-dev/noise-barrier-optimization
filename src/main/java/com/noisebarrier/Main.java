@@ -127,7 +127,96 @@ public class Main {
         System.out.println("Bucharest roads: " + selectedRoads.size());
         System.out.println("Bucharest residential areas: " + selectedAreas.size());
 
+
+        CityGrid bucharestBefore = new CityGrid(40, 40, 7.5, -150, -150);
+
+        calculator.calculateNoise(
+                bucharestBefore, selectedRoads, scenario, List.of(), reductionDb);
+
+        exporter.save(bucharestBefore, Path.of("bucharest-before.png"),
+                selectedRoads, List.of());
+
+        System.out.println("Bucharest baseline heat map saved!");
+
+        List<BarrierSegment> bucharestCandidates =
+                generator.generateCandidates(
+                        selectedRoads, selectedAreas, 3, 40);
+
+        System.out.println("Bucharest candidates: "
+                + bucharestCandidates.size());
+
+
+        double bucharestBudget = 30.0;
+
+// Select barriers using Greedy Search.
+        List<BarrierSegment> bucharestSelected =
+                new GreedySearch().findBest(
+                        selectedRoads, selectedAreas, scenario,
+                        bucharestCandidates, bucharestBudget, reductionDb);
+
+        printResult("Bucharest Greedy Search", bucharestSelected,
+                selectedRoads, selectedAreas, scenario, reductionDb);
+
+// Calculate noise after placing barriers.
+        CityGrid bucharestAfter = new CityGrid(40, 40, 7.5, -150, -150);
+
+        calculator.calculateNoise(
+                bucharestAfter, selectedRoads, scenario,
+                bucharestSelected, reductionDb);
+
+// Export the second heat map.
+        exporter.save(bucharestAfter, Path.of("bucharest-after.png"),
+                selectedRoads, bucharestSelected);
+
+        System.out.println("Bucharest after heat map saved!");
+
+
+        for (CityGrid grid : List.of(bucharestBefore, bucharestAfter)) {
+            double minNoise = Double.POSITIVE_INFINITY;
+            double maxNoise = Double.NEGATIVE_INFINITY;
+
+            for (int row = 0; row < grid.getRows(); row++) {
+                for (int col = 0; col < grid.getColumns(); col++) {
+                    double noise = grid.getNoiseLevel(row, col);
+                    minNoise = Math.min(minNoise, noise);
+                    maxNoise = Math.max(maxNoise, noise);
+                }
+            }
+
+            System.out.println("Noise range: " + minNoise
+                    + " to " + maxNoise + " dB");
+        }
+
+
+
+
         System.out.println("Heat maps saved!");
+
+
+
+        Road wholeRoad = new Road("Whole", 0, 0, 10, 0, 60, 10);
+
+        Road firstHalf = new Road("Half1", 0, 0, 5, 0, 60, 10);
+        Road secondHalf = new Road("Half2", 5, 0, 10, 0, 60, 10);
+
+        CityGrid wholeGrid = new CityGrid(1, 1, 1, 4.5, 14.5);
+        CityGrid splitGrid = new CityGrid(1, 1, 1, 4.5, 14.5);
+
+        calculator.calculateNoise(
+                wholeGrid, List.of(wholeRoad), scenario,
+                List.of(), reductionDb);
+
+        calculator.calculateNoise(
+                splitGrid, List.of(firstHalf, secondHalf), scenario,
+                List.of(), reductionDb);
+
+        double wholeNoise = wholeGrid.getNoiseLevel(0, 0);
+        double splitNoise = splitGrid.getNoiseLevel(0, 0);
+
+        System.out.println("Whole road noise: " + wholeNoise);
+        System.out.println("Split road noise: " + splitNoise);
+        System.out.println("Difference: " + (splitNoise - wholeNoise));
+
 
     }
 

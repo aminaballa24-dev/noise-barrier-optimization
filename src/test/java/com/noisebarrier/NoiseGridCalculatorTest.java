@@ -48,4 +48,35 @@ class NoiseGridCalculatorTest {
         assertTrue(grid.getNoiseLevel(0, 0) > 0);
         assertTrue(grid.getNoiseLevel(1, 1) > 0);
     }
+
+
+    @Test
+    void barrierReducesNoiseInProtectedCells() {
+        Road road = new Road("R1", 0, 0, 10, 0, 60, 10);
+        TrafficScenario scenario =
+                new TrafficScenario("S1", "Normal", 1.0);
+
+        BarrierSegment barrier =
+                new BarrierSegment("B1", 0, 3, 10, 3, 10);
+
+        CityGrid before = new CityGrid(2, 1, 10, 0, -10);
+        CityGrid after = new CityGrid(2, 1, 10, 0, -10);
+
+        NoiseGridCalculator calculator = new NoiseGridCalculator();
+
+        calculator.calculateNoise(
+                before, List.of(road), scenario, List.of(), 5);
+
+        calculator.calculateNoise(
+                after, List.of(road), scenario, List.of(barrier), 5);
+
+        // The cell behind the barrier should have less noise.
+        assertEquals(5.0,
+                before.getNoiseLevel(1, 0) - after.getNoiseLevel(1, 0),
+                0.000001);
+
+        // The cell on the other side should stay unchanged.
+        assertEquals(before.getNoiseLevel(0, 0),
+                after.getNoiseLevel(0, 0), 0.000001);
+    }
 }
