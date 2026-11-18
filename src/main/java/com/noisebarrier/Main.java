@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Random;
 
 public class Main {
 
@@ -94,9 +97,49 @@ public class Main {
                 .generateCandidates(roads, areas, 3, 40);
         System.out.println("Candidates: " + candidates.size());
 
+
+        // Use a small candidate set so all algorithms can be compared.
+
+        List<BarrierSegment> shuffled = new ArrayList<>(candidates);
+        Collections.shuffle(shuffled, new Random(44));
+
+        List<BarrierSegment> comparisonCandidates =
+                shuffled.subList(0, Math.min(15, shuffled.size()));
+
+
+        System.out.println("Comparison candidates: "
+                + comparisonCandidates.size());
+
+// Exhaustive Search
+        long start = System.nanoTime();
+        List<BarrierSegment> exhaustive = new ExhaustiveSearch().findBest(
+                roads, areas, scenario, comparisonCandidates, budget, reductionDb);
+        long exhaustiveTime = System.nanoTime() - start;
+
+// Greedy Search
+        start = System.nanoTime();
         List<BarrierSegment> selected = new GreedySearch().findBest(
-                roads, areas, scenario, candidates, budget, reductionDb);
-        printResult("Bucharest Greedy Search", selected, roads, areas, scenario, reductionDb);
+                roads, areas, scenario, comparisonCandidates, budget, reductionDb);
+        long greedyTime = System.nanoTime() - start;
+
+// Simulated Annealing
+        start = System.nanoTime();
+        List<BarrierSegment> annealing = new SimulatedAnnealing().findBest(
+                roads, areas, scenario, comparisonCandidates, budget, reductionDb);
+        long annealingTime = System.nanoTime() - start;
+
+// Compare the results.
+        printResult("Bucharest Exhaustive", exhaustive,
+                roads, areas, scenario, reductionDb);
+        printResult("Bucharest Greedy", selected,
+                roads, areas, scenario, reductionDb);
+        printResult("Bucharest Simulated Annealing", annealing,
+                roads, areas, scenario, reductionDb);
+
+        System.out.println("Bucharest execution times:");
+        System.out.println("Exhaustive: " + exhaustiveTime / 1_000_000.0 + " ms");
+        System.out.println("Greedy: " + greedyTime / 1_000_000.0 + " ms");
+        System.out.println("Simulated Annealing: " + annealingTime / 1_000_000.0 + " ms");
 
         // Compare noise numerically using the 2D grid (no images).
         NoiseGridCalculator calculator = new NoiseGridCalculator();
