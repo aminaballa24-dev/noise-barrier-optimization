@@ -1,12 +1,12 @@
+
 package com.noisebarrier;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class GreedySearch {
+public class GreedySearch extends BarrierOptimizer {
 
-    private final BarrierEvaluator evaluator = new BarrierEvaluator();
-
+    @Override
     public List<BarrierSegment> findBest(
             List<Road> roads,
             List<ResidentialArea> areas,
@@ -50,3 +50,23 @@ public class GreedySearch {
 
                 double ratio = (benefit - currentBenefit)
                         / barrier.getLength();
+
+                if (ratio > bestRatio + 1e-9) {
+                    bestRatio = ratio;
+                    bestBarrier = barrier;
+                    bestBenefit = benefit;
+                }
+            }
+
+            if (bestBarrier == null) {
+                break;
+            }
+
+            selected.add(bestBarrier);
+            usedLength += bestBarrier.getLength();
+            currentBenefit = bestBenefit;
+        }
+
+        return selected;
+    }
+}

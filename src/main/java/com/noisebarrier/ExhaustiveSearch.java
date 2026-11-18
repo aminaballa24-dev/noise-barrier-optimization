@@ -4,10 +4,9 @@ package com.noisebarrier;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ExhaustiveSearch {
+public class ExhaustiveSearch extends BarrierOptimizer {
 
-    private final BarrierEvaluator evaluator = new BarrierEvaluator();
-
+    @Override
     public List<BarrierSegment> findBest(
             List<Road> roads,
             List<ResidentialArea> areas,

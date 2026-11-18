@@ -1,13 +1,13 @@
+
 package com.noisebarrier;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class SimulatedAnnealing {
+public class SimulatedAnnealing extends BarrierOptimizer {
 
-    private final BarrierEvaluator evaluator = new BarrierEvaluator();
-
+    @Override
     public List<BarrierSegment> findBest(
             List<Road> roads,
             List<ResidentialArea> areas,
@@ -21,7 +21,7 @@ public class SimulatedAnnealing {
                 || scenario == null || candidates == null
                 || !Double.isFinite(maxLength) || maxLength < 0
                 || !Double.isFinite(barrierReductionDb) || barrierReductionDb < 0
-                || candidates.contains(null)) {
+                || candidates.stream().anyMatch(b -> b == null)) {
             throw new IllegalArgumentException("Invalid inputs.");
         }
 
@@ -78,3 +78,14 @@ public class SimulatedAnnealing {
                 currentBenefit = benefit;
             }
 
+            if (currentBenefit > bestBenefit) {
+                bestBenefit = currentBenefit;
+                best = new ArrayList<>(current);
+            }
+
+            temperature *= 0.99;
+        }
+
+        return best;
+    }
+}
