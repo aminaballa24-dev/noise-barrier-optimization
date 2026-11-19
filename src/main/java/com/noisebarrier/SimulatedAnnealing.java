@@ -43,7 +43,7 @@ public class SimulatedAnnealing extends BarrierOptimizer {
 
         Random random = new Random(42);
 
-        for (int step = 0; step < 300; step++) {
+        for (int step = 0; step < 1500; step++) {
             List<BarrierSegment> trial = new ArrayList<>(current);
 
             BarrierSegment barrier =

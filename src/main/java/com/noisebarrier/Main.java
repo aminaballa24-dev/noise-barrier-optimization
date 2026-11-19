@@ -33,6 +33,10 @@ public class Main {
                 generator.generateCandidates(roads, areas, 3, 30);
         System.out.println("Candidates: " + candidates.size());
 
+        BarrierOptimizer exhaustiveOptimizer = new ExhaustiveSearch();
+        BarrierOptimizer greedyOptimizer = new GreedySearch();
+        BarrierOptimizer annealingOptimizer = new SimulatedAnnealing();
+
         long start = System.nanoTime();
         List<BarrierSegment> exhaustive = new ExhaustiveSearch().findBest(
                 roads, areas, scenario, candidates, budget, reductionDb);
@@ -110,21 +114,25 @@ public class Main {
         System.out.println("Comparison candidates: "
                 + comparisonCandidates.size());
 
-// Exhaustive Search
+        BarrierOptimizer exhaustiveOptimizer = new ExhaustiveSearch();
+        BarrierOptimizer greedyOptimizer = new GreedySearch();
+        BarrierOptimizer annealingOptimizer = new SimulatedAnnealing();
+
+        // Exhaustive Search
         long start = System.nanoTime();
-        List<BarrierSegment> exhaustive = new ExhaustiveSearch().findBest(
+        List<BarrierSegment> exhaustive = exhaustiveOptimizer.findBest(
                 roads, areas, scenario, comparisonCandidates, budget, reductionDb);
         long exhaustiveTime = System.nanoTime() - start;
 
 // Greedy Search
         start = System.nanoTime();
-        List<BarrierSegment> selected = new GreedySearch().findBest(
+        List<BarrierSegment> selected = greedyOptimizer.findBest(
                 roads, areas, scenario, comparisonCandidates, budget, reductionDb);
         long greedyTime = System.nanoTime() - start;
 
 // Simulated Annealing
         start = System.nanoTime();
-        List<BarrierSegment> annealing = new SimulatedAnnealing().findBest(
+        List<BarrierSegment> annealing = annealingOptimizer.findBest(
                 roads, areas, scenario, comparisonCandidates, budget, reductionDb);
         long annealingTime = System.nanoTime() - start;
 
@@ -141,13 +149,42 @@ public class Main {
         System.out.println("Greedy: " + greedyTime / 1_000_000.0 + " ms");
         System.out.println("Simulated Annealing: " + annealingTime / 1_000_000.0 + " ms");
 
+
+        // Compare Greedy and Simulated Annealing with more candidates.
+        System.out.println("\n=== Larger Bucharest comparison ===");
+
+        List<BarrierSegment> largerCandidates = shuffled;
+        System.out.println("Candidates: " + largerCandidates.size());
+
+        long largeGreedyStart = System.nanoTime();
+        List<BarrierSegment> largeGreedy = greedyOptimizer.findBest(
+                roads, areas, scenario, largerCandidates, budget, reductionDb);
+        long largeGreedyTime = System.nanoTime() - largeGreedyStart;
+
+        long largeAnnealingStart = System.nanoTime();
+        List<BarrierSegment> largeAnnealing = annealingOptimizer.findBest(
+                roads, areas, scenario, largerCandidates, budget, reductionDb);
+        long largeAnnealingTime = System.nanoTime() - largeAnnealingStart;
+
+        printResult("Greedy Search (all candidates)", largeGreedy,
+                roads, areas, scenario, reductionDb);
+
+        printResult("Simulated Annealing (all candidates)", largeAnnealing,
+                roads, areas, scenario, reductionDb);
+
+        System.out.println("Execution times:");
+        System.out.println("Greedy: " + largeGreedyTime / 1_000_000.0 + " ms");
+        System.out.println("Simulated Annealing: "
+                + largeAnnealingTime / 1_000_000.0 + " ms");
+
+
         // Compare noise numerically using the 2D grid (no images).
         NoiseGridCalculator calculator = new NoiseGridCalculator();
         CityGrid before = new CityGrid(40, 40, 7.5, -150, -150);
         CityGrid after = new CityGrid(40, 40, 7.5, -150, -150);
 
         calculator.calculateNoise(before, roads, scenario, List.of(), reductionDb);
-        calculator.calculateNoise(after, roads, scenario, selected, reductionDb);
+        calculator.calculateNoise(after, roads, scenario, largeGreedy, reductionDb);
         printGridComparison(before, after);
     }
 
